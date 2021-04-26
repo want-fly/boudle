@@ -77,37 +77,38 @@ func Create(c *gin.Context) {
 }
 func createImage(dir string, c *gin.Context) string {
 	// 1.创建文件夹
-	dstName := "/root/remote-project-file/" + dir
+	dstName := "/root/remote-project-file/" + dir + "/"
 	srcName := "/root/remote-project-file/Dockerfile"
 	err := os.MkdirAll(dstName, os.ModePerm)
 	if err != nil {
 		fmt.Println("create dir failed, err:", err)
 		return ""
 	}
-	// 2.接收文件
-	form, err := c.MultipartForm()
+	// 2.接收tar包文件
+	file, err := c.FormFile("file")
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-		return " "
+		return ""
 	}
-	files := form.File["files"]
-	var projectDir string
-	for _, file := range files {
-		filename := filepath.Base(file.Filename)
-		path := strings.Split(file.Filename, filename)[0]
-		projectDir = strings.Split(path, "/")[0]
-		err := os.MkdirAll(dstName+"/"+path, os.ModePerm)
-		if err != nil {
-			fmt.Println("create dir failed, err:", err)
-			return ""
-		}
-		if err = c.SaveUploadedFile(file, dstName+"/"+file.Filename); err != nil {
-			c.String(http.StatusBadRequest, fmt.Sprintf("upload file err: %s", err.Error()))
-			return " "
-		}
+	filename := filepath.Base(file.Filename)
+	// 上传的文件不是 tar.gz格式的直接结束
+	if strings.HasSuffix(filename, ".tar.gz") == false {
+		return ""
 	}
-	// 3.复制DockerFile到新的文件夹内
-	dst := dstName + "/" + projectDir + "/"
+	filename = dstName + filename
+	if err := c.SaveUploadedFile(file, filename); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("upload file err: %s", err.Error()))
+		return ""
+	}
+	c.String(http.StatusOK, fmt.Sprintf("File %s uploaded successfully with fields ", file.Filename))
+	//2.2.对上传的tar包进行解压
+	err = until.DeCompress(filename, dstName)
+	if err != nil {
+		fmt.Println("DeCompress failed err: ", err)
+		return ""
+	}
+	// 3.复制DockerFile到新的文件夹内  注意现在的wordpress是写死的以后需要用户输入
+	dst := dstName + "wordpress" + "/"
 	dstFile := dst + "Dockerfile"
 	_, err = until.CopyFile(dstFile, srcName)
 	if err != nil {
@@ -132,6 +133,9 @@ func createImage(dir string, c *gin.Context) string {
 }
 
 func deploy(images string) {
+	if images == "" {
+		return
+	}
 	deployWordpressDeployment(images)
 	deployMysqlDeployment()
 	deployWordpressSvc()
