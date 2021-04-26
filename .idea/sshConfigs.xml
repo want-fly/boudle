@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="175.24.124.194" id="5671f028-55c1-4cc6-97c6-b9a83850a8df" keyPath="C:\Users\土豆\.ssh\id_rsa.ppk" port="22" nameFormat="DESCRIPTIVE" username="root" />
+    </configs>
+  </component>
+</project>

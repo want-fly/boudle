@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="8304b5a0-9349-4d4e-ba11-7fd50add7496" name="boudle">
+        <fileTransfer rootFolder="/root/remote-project-file/boudle" accessType="SFTP" host="175.24.124.194" port="22" sshConfigId="5671f028-55c1-4cc6-97c6-b9a83850a8df" sshConfig="root@175.24.124.194:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
