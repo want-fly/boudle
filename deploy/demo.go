@@ -10,11 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -84,32 +81,10 @@ func createImage(dir string, c *gin.Context) string {
 		fmt.Println("create dir failed, err:", err)
 		return ""
 	}
-	// 2.接收tar包文件
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-		return ""
-	}
-	filename := filepath.Base(file.Filename)
-	// 上传的文件不是 tar.gz格式的直接结束
-	if strings.HasSuffix(filename, ".tar.gz") == false {
-		return ""
-	}
-	filename = dstName + filename
-	if err := c.SaveUploadedFile(file, filename); err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("upload file err: %s", err.Error()))
-		return ""
-	}
-	c.String(http.StatusOK, fmt.Sprintf("File %s uploaded successfully with fields ", file.Filename))
-	//2.2.对上传的tar包进行解压
-	err = until.DeCompress(filename, dstName)
-	if err != nil {
-		fmt.Println("DeCompress failed err: ", err)
-		return ""
-	}
+	// 2.用户提供的远程服务器下载好代码
+	until.DownloadFileFromRemoteServer("http://175.24.124.194:12345/", dstName)
 	// 3.复制DockerFile到新的文件夹内  注意现在的wordpress是写死的以后需要用户输入
-	dst := dstName + "wordpress" + "/"
-	dstFile := dst + "Dockerfile"
+	dstFile := dstName + "Dockerfile"
 	_, err = until.CopyFile(dstFile, srcName)
 	if err != nil {
 		fmt.Println("copy file failed, err:", err)
@@ -117,7 +92,7 @@ func createImage(dir string, c *gin.Context) string {
 	}
 	// 4. 执行docker build -t 命令
 	//更改工作目录
-	err = os.Chdir(dst)
+	err = os.Chdir(dstName)
 	if err != nil {
 		fmt.Println("cd failed", err)
 		return ""
